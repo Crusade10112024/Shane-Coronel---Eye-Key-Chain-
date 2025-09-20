@@ -499,14 +499,14 @@
                 <div id="filePreview" class="file-preview"></div>
             </div>
             <div class="buttons">
-                <button type="button" class="btn btn-primary" onclick="saveCustomer()">💾 Save Customer</button>
-                <button type="button" class="btn btn-success" id="updateBtn" style="display:none;" onclick="updateCustomer()">✏️ Update Customer</button>
-                <button type="button" class="btn btn-warning" id="cancelBtn" style="display:none;" onclick="cancelEdit()">❌ Cancel Edit</button>
+                <button type="button" class="btn btn-primary" onclick="saveCustomer()" ontouchstart="saveCustomer()">💾 Save Customer</button>
+                <button type="button" class="btn btn-success" id="updateBtn" style="display:none;" onclick="updateCustomer()" ontouchstart="updateCustomer()">✏️ Update Customer</button>
+                <button type="button" class="btn btn-warning" id="cancelBtn" style="display:none;" onclick="cancelEdit()" ontouchstart="cancelEdit()">❌ Cancel Edit</button>
             </div>
         </div>
 
         <div class="refresh-section">
-            <button type="button" class="btn btn-primary" onclick="refreshData()">🔄 Refresh Data</button>
+            <button type="button" class="btn btn-primary" onclick="refreshData()" ontouchstart="refreshData()">🔄 Refresh Data</button>
         </div>
 
         <div class="customers-section">
@@ -572,13 +572,56 @@
                 displayFilePreview();
             });
             
+            // Add mobile-specific event listeners
+            addMobileEventListeners();
+            
             // Initialize display
             displayCustomers();
             updateStatistics();
         });
 
+        // Add touch event listeners for mobile compatibility
+        function addMobileEventListeners() {
+            // Save button
+            const saveBtn = document.querySelector('.btn-primary');
+            if (saveBtn) {
+                saveBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    console.log('Save button touched on mobile');
+                    saveCustomer();
+                });
+            }
+            
+            // Update button
+            const updateBtn = document.getElementById('updateBtn');
+            if (updateBtn) {
+                updateBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    updateCustomer();
+                });
+            }
+            
+            // Cancel button
+            const cancelBtn = document.getElementById('cancelBtn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    cancelEdit();
+                });
+            }
+        }
+
         function saveCustomer() {
-            console.log('Save button clicked!');
+            console.log('Save button clicked! (Mobile/Desktop)');
+            
+            // Prevent multiple rapid clicks
+            const saveBtn = document.querySelector('.btn-primary');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                setTimeout(() => {
+                    saveBtn.disabled = false;
+                }, 2000);
+            }
             
             // Get form values
             const name = document.getElementById('customerName').value.trim();
@@ -589,9 +632,12 @@
             const status = document.getElementById('status').value;
             const notes = document.getElementById('notes').value.trim();
 
+            console.log('Form data collected:', { name, facebook, phone, orderDate, dueDate, status, notes });
+
             // Validate required fields
             if (!name) {
                 alert('Customer name is required!');
+                if (saveBtn) saveBtn.disabled = false;
                 return;
             }
 
@@ -609,7 +655,7 @@
                 timestamp: new Date().toISOString()
             };
 
-            console.log('Customer data:', customer);
+            console.log('Customer data created:', customer);
 
             // Handle file uploads
             if (selectedFiles.length > 0) {
@@ -710,6 +756,10 @@
             resetForm();
             displayCustomers();
             updateStatistics();
+            
+            // Save to browser storage
+            saveData();
+            
             alert('Customer updated successfully!');
         }
 
@@ -832,6 +882,10 @@
             
             if (customers.length < initialLength) {
                 console.log('Successfully deleted customer');
+                
+                // Save to browser storage
+                saveData();
+                
                 displayCustomers();
                 updateStatistics();
                 alert('Customer deleted successfully!');
